@@ -84,10 +84,10 @@ Welcome_metrics <- Chicago_COVID19_Summary %>% rbind(covidDeathsDataByCounty_JH_
 Welcome_metrics_spread <- Welcome_metrics %>% spread(layer,value)
 
 # add one day to date because of strange ArcGIS Online bug
-write.csv(Welcome_metrics,"C:/Users/scott/OneDrive - DePaul University/PROJECTS/COVID/Dashboard/Layers/GeoSummary_metrics.csv")
-write.csv(Welcome_metrics_spread,"C:/Users/scott/OneDrive - DePaul University/PROJECTS/COVID/Dashboard/Layers/GeoSummary_metrics_spread.csv")
+write.csv(Welcome_metrics,"layers/GeoSummary_metrics.csv")
+write.csv(Welcome_metrics_spread,"layers/GeoSummary_metrics_spread.csv")
 
-ZCTA_select = st_read("C:/Users/scott/OneDrive - DePaul University/PROJECTS/COVID/Dashboard/Layers/ZCTA_Select.shp")
+ZCTA_select = st_read("layers/ZCTA_Select.shp")
 
 Chicago_COVID19_ByZCTA <- read_csv("https://data.cityofchicago.org/api/views/yhhz-zm2v/rows.csv?accessType=DOWNLOAD&bom=true&format=true")
 Chicago_COVID19_ByZCTA <- Chicago_COVID19_ByZCTA %>% rename("ZCTA5"="ZIP Code", "WeekNo"="Week Number","StartDate"="Week Start","EndDate"="Week End","CasesWk"="Cases - Weekly","CasesCm"="Cases - Cumulative","CasesWkRt"="Case Rate - Weekly","CasesCmRt"="Case Rate - Cumulative","TestsWk"="Tests - Weekly","TestsCm"="Tests - Cumulative","TestsWkRt"="Test Rate - Weekly","TestsCmRt"="Test Rate - Cumulative","DeathsWk"="Deaths - Weekly","DeathsCm"="Deaths - Cumulative","DeathsWkRt"="Death Rate - Weekly","DeathsCmRt"="Death Rate - Cumulative", "PctPosWk"="Percent Tested Positive - Weekly", "PctPosCum"="Percent Tested Positive - Cumulative","TotPop"="Population","RowID"="Row ID","GEOM"="ZIP Code Location") %>% mutate(PctPosCum = CasesCm/TestsCm*100, PctPosWk = CasesWk/TestsWk*100)

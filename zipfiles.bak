@@ -1,0 +1,4 @@
+cd layers
+7z a Disparity_counts.zip Disparity_counts.*
+7z a Chicago_COVID19Vaccinations_ByZCTA_GEOM.zip Chicago_COVID19Vaccinations_ByZCTA_GEOM.*
+7z a Chicago_COVID19Vaccinations_ByZCTA_GEOM.zip Chicago_COVID19Vaccinations_ByZCTA_GEOM.*

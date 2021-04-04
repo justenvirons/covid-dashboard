@@ -77,7 +77,7 @@ DemoChars_Chicago_pct_long <- DemoChars_Chicago_pct_long %>% mutate(Order=row_nu
 # Combine demographics to COVID-19 time series data
 Chicago_COVID19_CasesDeathsHospitalizations_pct_long <- Chicago_COVID19_CasesDeathsHospitalizations_pct_long %>% drop_na(Date) %>% replace(is.na(.), 0) #remove NAs in Date column, replace NAs with 0s in all other
 Chicago_COVID19_CasesDeathsHospitalizations_pct_long <- Chicago_COVID19_CasesDeathsHospitalizations_pct_long %>% left_join(DemoChars_Chicago_pct_long, by="Category") 
-Chicago_COVID19_CasesDeathsHospitalizations_pct_long_wk <- Chicago_COVID19_CasesDeathsHospitalizations_pct_long %>% filter(Date==EndDate-1) %>% arrange(Date, Order) %>% mutate(EndDate=EndDate+1)
+Chicago_COVID19_CasesDeathsHospitalizations_pct_long_wk <- Chicago_COVID19_CasesDeathsHospitalizations_pct_long %>% filter(Date==EndDate-1) %>% arrange(Date, Order) %>% mutate(WeekNo = ifelse(format(EndDate,"%Y")==2021,WeekNo+53,WeekNo))
 
 # test <- Chicago_COVID19_CasesDeathsHospitalizations_pct_long_wk %>% group_by(WeekNo) %>% summarise()
 # Chicago_COVID19_CasesDeathsHospitalizations_pct_long_wk <- Chicago_COVID19_CasesDeathsHospitalizations_pct_long %>% mutate(EndDate=Date+1) %>% arrange(Date, Order) 

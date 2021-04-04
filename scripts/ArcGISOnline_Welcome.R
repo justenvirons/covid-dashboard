@@ -23,6 +23,8 @@ library(zoo)
 library(gtools)
 library(zip)
 
+setwd("C:/Users/scott/OneDrive - CCDPH/OneDrive - Cook County Health/git_repos/justenvirons/covid-dashboard")
+
 # Download latest cases, deaths US data from WHO
 # https://covid19.who.int/WHO-COVID-19-global-data.csv
 # create nationwide table
@@ -95,6 +97,9 @@ Chicago_COVID19_ByZCTA$ZCTA5 <- as.character(Chicago_COVID19_ByZCTA$ZCTA5)
 Chicago_COVID19_ByZCTA$GEOM <- NULL
 Chicago_COVID19_ByZCTA$StartDate <- as.Date(Chicago_COVID19_ByZCTA$StartDate, "%m/%d/%Y")+1 # reformat date text to date data type
 Chicago_COVID19_ByZCTA$EndDate <- as.Date(Chicago_COVID19_ByZCTA$EndDate, "%m/%d/%Y")+1 # reformat date text to date data type
+Chicago_COVID19_ByZCTA$WeekNo <- ifelse(format(Chicago_COVID19_ByZCTA$StartDate,"%Y")==2021,
+                                        Chicago_COVID19_ByZCTA$WeekNo+53,
+                                        Chicago_COVID19_ByZCTA$WeekNo)
 
 Chicago_COVID19_ByZCTA_geom <- left_join(Chicago_COVID19_ByZCTA, ZCTA_select, by = c("ZCTA5"="ZCTA5"))
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(StartDate>=as.Date("3/15/2020","%m/%d/%Y"))

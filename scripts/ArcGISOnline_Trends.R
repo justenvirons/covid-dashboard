@@ -33,7 +33,10 @@ Chicago_COVID19_ByZCTA$ZCTA5 <- as.character(Chicago_COVID19_ByZCTA$ZCTA5)
 Chicago_COVID19_ByZCTA$GEOM <- NULL
 Chicago_COVID19_ByZCTA$StartDate <- as.Date(Chicago_COVID19_ByZCTA$StartDate, "%m/%d/%Y")+1 # reformat date text to date data type
 Chicago_COVID19_ByZCTA$EndDate <- as.Date(Chicago_COVID19_ByZCTA$EndDate, "%m/%d/%Y")+1 # reformat date text to date data type
-Chicago_COVID19_ByZCTA <- Chicago_COVID19_ByZCTA %>% mutate(WeekNo = ifelse(format(StartDate,"%Y")==2021,WeekNo+53,WeekNo))
+Chicago_COVID19_ByZCTA <- Chicago_COVID19_ByZCTA %>% 
+  mutate(WeekNo = ifelse(format(StartDate,"%Y")==2021,
+                         WeekNo+53,
+                         WeekNo))
 
 Chicago_COVID19_ByZCTA_geom <- left_join(Chicago_COVID19_ByZCTA, ZCTA_select, by = c("ZCTA5"="ZCTA5"))
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(StartDate>=as.Date("3/14/2020","%m/%d/%Y"))
@@ -121,9 +124,7 @@ for(layerrow in 1:1){
   for (daterow in 1:1) {
     alayer <- ZCTA_map_layers[[layerrow,"layer"]]
     adate <- ZCTA_map_dates[[daterow,"EndDate"]]
-    
     alayername = paste("cluster",as.character(layerrow),as.character(daterow),sep = "_")
-    
     ZCTA_map_latest <- ZCTA_map %>% filter(EndDate==adate, layer== alayer)
     ZCTA_map_latest$value[ZCTA_map_latest$value == Inf] <- 0
     ZCTA_map_latest$value[ZCTA_map_latest$value == -Inf] <- 0
@@ -136,8 +137,7 @@ for(layerrow in 1:1){
     ZCTA_map_latest_lm <- cbind(ZCTA_map_latest_sf, ZCTA_map_latest_lm)
     ZCTA_map_latest_lm <- ZCTA_map_latest_lm[, !duplicated(colnames(ZCTA_map_latest_lm))]
     ZCTA_map_latest_lm <- ZCTA_map_latest_lm %>% select(-contains(".1")) %>% rename(Pr.Z = Pr.z...0.)
-    ZCTA_map_latest_lm <- ZCTA_map_latest_lm %>% mutate(value_s = scale(value, scale=FALSE), Ii_s = scale(Ii, scale=FALSE), Gi_bin = ifelse(value_s >0 & Ii_s>0, 1, ifelse(value_s < 0 & Ii_s>0 ,2,ifelse(value_s < 0 & Ii_s<0 ,3,ifelse(value_s > 0 & Ii_s < 0 ,4,0))))) %>% mutate(Gi_bin = ifelse(Pr.Z > signif, 0, Gi_bin))
-    
+    ZCTA_map_latest_lm <- ZCTA_map_latest_lm %>% mutate(value_s = scale(value, scale=FALSE), Ii_s = scale(Ii, scale=FALSE), Gi_bin = ifelse(value_s >0 & Ii_s>0, 1, ifelse(value_s < 0 & Ii_s>0 ,2,ifelse(value_s < 0 & Ii_s<0 ,3,ifelse(value_s > 0 & Ii_s < 0 ,4,0)))))
   }
 }
 
@@ -167,7 +167,6 @@ for(layerrow in 1:nrow(ZCTA_map_layers)){
     ZCTA_map_latest_lm <- ZCTA_map_latest_lm[, !duplicated(colnames(ZCTA_map_latest_lm))]
     ZCTA_map_latest_lm <- ZCTA_map_latest_lm %>% select(-contains(".1")) %>% rename(Pr.Z = Pr.z...0.)
     ZCTA_map_latest_lm <- ZCTA_map_latest_lm %>% mutate(value_s = scale(value, scale=FALSE), Ii_s = scale(Ii, scale=FALSE), Gi_bin = ifelse(value_s >0 & Ii_s>0, 1, ifelse(value_s < 0 & Ii_s>0 ,2,ifelse(value_s < 0 & Ii_s<0 ,3,ifelse(value_s > 0 & Ii_s < 0 ,4,0))))) %>% mutate(Gi_bin = ifelse(Pr.Z > signif, 0, Gi_bin))
-    
     alayer <- assign(alayername,ZCTA_map_latest_lm) # assign custom name to layer- and date-specific dataframe
     ZCTA_map_latest_lm_bind <- ZCTA_map_latest_lm_bind %>% rbind(alayer)
   }

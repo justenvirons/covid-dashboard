@@ -3,7 +3,6 @@
 ## Script name: 
 ## Purpose of script:
 ## Author: C. Scott Smith, PhD AICP
-## Date Created: 2020-11-15
 ## Date Last Updated: 2021-03-09
 ## Email: c.scott.smith@depaul.edu
 ## ---------------------------
@@ -16,12 +15,13 @@
 library(csv)
 library(dplyr)
 library(tidyverse)
-library(clipr)
-library(sf)
 library(scales)
 library(zoo)
 library(gtools)
 library(zip)
+
+library(sf)
+library(arcgisbinding)
 
 setwd("C:/Users/scott/OneDrive - CCDPH/OneDrive - Cook County Health/git_repos/justenvirons/covid-dashboard")
 
@@ -97,9 +97,9 @@ Chicago_COVID19_ByZCTA$ZCTA5 <- as.character(Chicago_COVID19_ByZCTA$ZCTA5)
 Chicago_COVID19_ByZCTA$GEOM <- NULL
 Chicago_COVID19_ByZCTA$StartDate <- as.Date(Chicago_COVID19_ByZCTA$StartDate, "%m/%d/%Y")+1 # reformat date text to date data type
 Chicago_COVID19_ByZCTA$EndDate <- as.Date(Chicago_COVID19_ByZCTA$EndDate, "%m/%d/%Y")+1 # reformat date text to date data type
-Chicago_COVID19_ByZCTA$WeekNo <- ifelse(format(Chicago_COVID19_ByZCTA$StartDate,"%Y")==2021,
-                                        Chicago_COVID19_ByZCTA$WeekNo+53,
-                                        Chicago_COVID19_ByZCTA$WeekNo)
+# Chicago_COVID19_ByZCTA$WeekNo <- ifelse(format(Chicago_COVID19_ByZCTA$StartDate,"%Y")==2021,
+#                                         Chicago_COVID19_ByZCTA$WeekNo+53,
+#                                         Chicago_COVID19_ByZCTA$WeekNo)
 
 Chicago_COVID19_ByZCTA_geom <- left_join(Chicago_COVID19_ByZCTA, ZCTA_select, by = c("ZCTA5"="ZCTA5"))
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(StartDate>=as.Date("3/15/2020","%m/%d/%Y"))
@@ -115,7 +115,10 @@ fx_pfxnt <- function(x) paste0('nt',x) # prefix "pct" added to column names with
 Chicago_COVID19_ByZCTA_geom_ntile <- Chicago_COVID19_ByZCTA_geom %>% filter(ZCTA5 != "Unknown" | ZCTA5 == "60666") %>% mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% mutate_at(vars(5:14,16,18), fx_ntile) %>% rename_at(vars(5:18), fx_pfxnt)
 Chicago_COVID19_ByZCTA_geom_ntile_gather <- Chicago_COVID19_ByZCTA_geom_ntile %>% gather("ntLayer","ntile",5:18) %>% select(ntLayer, ntile)
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(ZCTA5 != "Unknown" | ZCTA5 == "60666") %>% mutate(geometry=st_centroid(geometry)) %>% gather("Layer","Value",5:18) %>% mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% cbind(Chicago_COVID19_ByZCTA_geom_ntile_gather) %>% select(-RowID,-TOTPOP)
-Chicago_COVID19_ByZCTA_geom$WeekNo <- Chicago_COVID19_ByZCTA_geom$WeekNo-3
+
+Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% 
+  mutate(WeekNo = epiweek(date),
+         WeekNo = if_else(epiyear(date)==2021,WeekNo+52,WeekNo)-1)
 
 # Used for disparity maps (death and case counts all weeks) 
 st_write(Chicago_COVID19_ByZCTA_geom, "layers/Disparity_counts.shp", append=FALSE)

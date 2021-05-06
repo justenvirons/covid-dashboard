@@ -29,7 +29,10 @@ ZCTA_select = st_read("layers/ZCTA_Select.shp")
 Chicago_COVID19Vaccinations_ByZCTA <- read_csv(file="https://data.cityofchicago.org/api/views/553k-3xzc/rows.csv?accessType=DOWNLOAD&bom=true&format=true")
 Chicago_COVID19Vaccinations_ByZCTA <- Chicago_COVID19Vaccinations_ByZCTA %>% rename("zcta"="Zip Code", "date"="Date", "doses_daily"="Total Doses - Daily", "doses_cum"="Total Doses - Cumulative", "fdose_daily"="1st Dose - Daily", "fdose_cum"="1st Dose - Cumulative", "fdose_pctpop"="1st Dose - Percent Population", "com_daily"="Vaccine Series Completed - Daily", "com_cum"="Vaccine Series Completed - Cumulative", "com_pctpop"="Vaccine Series Completed  - Percent Population", "pop"="Population", "geometry"="ZIP Code Location")
 Chicago_COVID19Vaccinations_ByZCTA$date <- as.Date(Chicago_COVID19Vaccinations_ByZCTA$date, "%m/%d/%Y") # reformat date text to date data type
-Chicago_COVID19Vaccinations_ByZCTA <- Chicago_COVID19Vaccinations_ByZCTA %>% mutate(WeekNo = as.numeric(format(date,"%W"))+1)  %>% mutate(WeekNo = ifelse(format(date,"%Y")==2021,WeekNo+53,WeekNo))
+Chicago_COVID19Vaccinations_ByZCTA <- Chicago_COVID19Vaccinations_ByZCTA %>% 
+  mutate(WeekNo = epiweek(date),
+         WeekNo = if_else(epiyear(date)==2021,WeekNo+52,WeekNo)-1)
+
 Chicago_COVID19Vaccinations_ByZCTA$date <- Chicago_COVID19Vaccinations_ByZCTA$date + 1 # add one day to date for ArcGIS online
 Chicago_COVID19Vaccinations_ByZCTA$StartDate <- floor_date(Chicago_COVID19Vaccinations_ByZCTA$date,unit="week")+1
 Chicago_COVID19Vaccinations_ByZCTA$EndDate <- ceiling_date(Chicago_COVID19Vaccinations_ByZCTA$date,unit="week")+1

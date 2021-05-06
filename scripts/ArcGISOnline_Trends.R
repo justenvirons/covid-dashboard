@@ -20,9 +20,11 @@ library(spgwr)
 library(grid)
 library(gridExtra)
 library(data.table)
+library(lubridate)
 
 # import clipped zip code geographic file
 ZCTA_select = st_read("layers/ZCTA_Select.shp")
+ZCTA_select <- st_transform(ZCTA_select, crs = 26916)
 
 # Analyses for hardship dashboard
 # download and import data from Chicago Data Portal
@@ -34,9 +36,8 @@ Chicago_COVID19_ByZCTA$GEOM <- NULL
 Chicago_COVID19_ByZCTA$StartDate <- as.Date(Chicago_COVID19_ByZCTA$StartDate, "%m/%d/%Y")+1 # reformat date text to date data type
 Chicago_COVID19_ByZCTA$EndDate <- as.Date(Chicago_COVID19_ByZCTA$EndDate, "%m/%d/%Y")+1 # reformat date text to date data type
 Chicago_COVID19_ByZCTA <- Chicago_COVID19_ByZCTA %>% 
-  mutate(WeekNo = ifelse(format(StartDate,"%Y")==2021,
-                         WeekNo+53,
-                         WeekNo))
+  mutate(WeekNo = epiweek(EndDate),
+         WeekNo = if_else(epiyear(EndDate)==2021,WeekNo+52,WeekNo)-1)
 
 Chicago_COVID19_ByZCTA_geom <- left_join(Chicago_COVID19_ByZCTA, ZCTA_select, by = c("ZCTA5"="ZCTA5"))
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(StartDate>=as.Date("3/14/2020","%m/%d/%Y"))
@@ -103,7 +104,6 @@ ZCTA_select$ZCTA5No <- as.integer(ZCTA_select$ZCTA5)
 
 # Select and rename variables for ZCTA_map layer
 ZCTA_map <- Chicago_COVID19_ByZCTA_geom %>% filter(ZCTA5!="Unknown" & ZCTA5!="60666") %>% select(ZCTA5, REGION, WeekNo, "SrtDate" = StartDate, EndDate, "PosWkqa" = PctPosWk_qa, "CasWkRtqa" = CasesWkRt_qa, "Hdshpqa" = Hardship_qa, "DthWkRqa" = DeathsWkRt_qa, "PosWk" = PctPosWk, "CasWkRt" = CasesWkRt, "DthWkRt" = DeathsWkRt, "Hdshp" = Hardship, "geom" = geometry)
-ZCTA_map$WeekNo <- ZCTA_map$WeekNo-3
 ZCTA_map$ZCTA5 <- as.character(ZCTA_map$ZCTA5)
 ZCTA_map$ZCTA5No <- as.integer(ZCTA_map$ZCTA5) 
 ZCTA_map <- ZCTA_map %>% gather("layer", "ntile", 6:9)
@@ -118,6 +118,9 @@ ZCTA_map %>% group_by(layer_d, ntile, label, color) %>% summarise(n(), min(value
 # Run LISA clustering for all variables and weeks
 ZCTA_map_layers <- ZCTA_map %>% group_by(layer) %>% summarise(n()) %>% select(layer)
 ZCTA_map_dates <- ZCTA_map %>% group_by(EndDate) %>% summarise(n()) %>% select(EndDate)
+
+
+
 
 # develop data frame template for subsequent analyses
 for(layerrow in 1:1){

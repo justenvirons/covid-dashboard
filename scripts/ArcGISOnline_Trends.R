@@ -37,7 +37,8 @@ Chicago_COVID19_ByZCTA$StartDate <- as.Date(Chicago_COVID19_ByZCTA$StartDate, "%
 Chicago_COVID19_ByZCTA$EndDate <- as.Date(Chicago_COVID19_ByZCTA$EndDate, "%m/%d/%Y")+1 # reformat date text to date data type
 Chicago_COVID19_ByZCTA <- Chicago_COVID19_ByZCTA %>% 
   mutate(WeekNo = epiweek(EndDate),
-         WeekNo = if_else(epiyear(EndDate)==2021,WeekNo+52,WeekNo)-1)
+         WeekNo = if_else(epiyear(EndDate)==2021,WeekNo+52,WeekNo)-1,
+         WeekNo = if_else(epiyear(EndDate)==2022,WeekNo+104,WeekNo)-1)
 
 Chicago_COVID19_ByZCTA_geom <- left_join(Chicago_COVID19_ByZCTA, ZCTA_select, by = c("ZCTA5"="ZCTA5"))
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(StartDate>=as.Date("3/14/2020","%m/%d/%Y"))
@@ -119,9 +120,6 @@ ZCTA_map %>% group_by(layer_d, ntile, label, color) %>% summarise(n(), min(value
 ZCTA_map_layers <- ZCTA_map %>% group_by(layer) %>% summarise(n()) %>% select(layer)
 ZCTA_map_dates <- ZCTA_map %>% group_by(EndDate) %>% summarise(n()) %>% select(EndDate)
 
-
-
-
 # develop data frame template for subsequent analyses
 for(layerrow in 1:1){
   for (daterow in 1:1) {
@@ -182,6 +180,13 @@ rm(list=ls(pattern="sumProfile"))
 rm(alayer,Chicago_COVID19_ByZCTA, Chicago_COVID19_ByZCTA_geom, ZCTA_map,ZCTA_map_dates,ZCTA_map_latest,ZCTA_map_latest_lm,ZCTA_map_latest_mi,ZCTA_map_latest_nb,ZCTA_map_latest_sf,ZCTA_map_latest_sp,ZCTA_map_latest_ww,ZCTA_map_layers,ZCTA_select)
 
 # write data frames to layers folder
+
+ZCTA_map_latest_lm_bind_part01 <- ZCTA_map_latest_lm_bind %>% filter(WeekNo<=52)
+ZCTA_map_latest_lm_bind_part02 <- ZCTA_map_latest_lm_bind %>% filter(WeekNo>52)
+st_write(ZCTA_map_latest_lm_bind_part01, "layers/Trends_map.shp", append=FALSE)
+st_write(ZCTA_map_latest_lm_bind_part02, "layers/Trends_map.shp", append=FALSE)
+
+
 st_write(ZCTA_map_latest_lm_bind, "layers/Trends_map.shp", append=FALSE)
 write.csv(ZCTA_profile,"layers/ZCTA_profile.csv")
 write.csv(ZCTA_metrics,"layers/ZCTA_metrics.csv")

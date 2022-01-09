@@ -19,11 +19,11 @@ library(scales)
 library(zoo)
 library(gtools)
 library(zip)
-
+library(lubridate)
 library(sf)
 library(arcgisbinding)
 
-setwd("C:/Users/scott/OneDrive - CCDPH/OneDrive - Cook County Health/git_repos/justenvirons/covid-dashboard")
+setwd("E:/OneDrive - Cook County Health/git_repos/justenvirons/covid-dashboard")
 
 # Download latest cases, deaths US data from WHO
 # https://covid19.who.int/WHO-COVID-19-global-data.csv
@@ -79,10 +79,10 @@ Chicago_COVID19_Summary <- Chicago_COVID19_CasesDeathsHospitalizations %>% drop_
 Chicago_COVID19_Summary <- Chicago_COVID19_Summary %>% mutate_if(is.numeric,list(~replace_na(.,0))) %>% ungroup()
 Chicago_COVID19_Summary <- Chicago_COVID19_Summary %>% arrange(Date) %>% select(Date, Cases, Deaths) %>% mutate(Cases7d = rollmean(x=Cases, k=7, fill=0, align="right"), Deaths7d = rollmean(x=Deaths, k=7, fill=0, align="right"), Casescm = cumsum(Cases), Deathscm = cumsum(Deaths), Geography="Chicago")
 Chicago_COVID19_Summary <- Chicago_COVID19_Summary %>% gather("layer","value",Cases:Deathscm)
-Welcome_metrics <- Welcome_metrics %>% mutate(Date = Date +1)
 
 # rbind tables together
 Welcome_metrics <- Chicago_COVID19_Summary %>% rbind(covidDeathsDataByCounty_JH_long_Cook,covidCasesDataByCounty_JH_long_Cook,covidDeathsDataByCounty_JH_long_IL,covidCasesDataByCounty_JH_long_IL,covidCasesDataByCountry_WHO_US) %>% drop_na(Date) %>% mutate(value=if_else(value<0,0,value)) %>% filter(Date>="2020-03-14")
+Welcome_metrics <- Welcome_metrics %>% mutate(Date = Date +1)
 Welcome_metrics_spread <- Welcome_metrics %>% spread(layer,value)
 
 # add one day to date because of strange ArcGIS Online bug
@@ -90,6 +90,8 @@ write.csv(Welcome_metrics,"layers/GeoSummary_metrics.csv")
 write.csv(Welcome_metrics_spread,"layers/GeoSummary_metrics_spread.csv")
 
 ZCTA_select = st_read("layers/ZCTA_Select.shp")
+
+Vulnerability_ZCTA = st_read("layers/Vulnerability_ZCTA.shp")
 
 Chicago_COVID19_ByZCTA <- read_csv("https://data.cityofchicago.org/api/views/yhhz-zm2v/rows.csv?accessType=DOWNLOAD&bom=true&format=true")
 Chicago_COVID19_ByZCTA <- Chicago_COVID19_ByZCTA %>% rename("ZCTA5"="ZIP Code", "WeekNo"="Week Number","StartDate"="Week Start","EndDate"="Week End","CasesWk"="Cases - Weekly","CasesCm"="Cases - Cumulative","CasesWkRt"="Case Rate - Weekly","CasesCmRt"="Case Rate - Cumulative","TestsWk"="Tests - Weekly","TestsCm"="Tests - Cumulative","TestsWkRt"="Test Rate - Weekly","TestsCmRt"="Test Rate - Cumulative","DeathsWk"="Deaths - Weekly","DeathsCm"="Deaths - Cumulative","DeathsWkRt"="Death Rate - Weekly","DeathsCmRt"="Death Rate - Cumulative", "PctPosWk"="Percent Tested Positive - Weekly", "PctPosCum"="Percent Tested Positive - Cumulative","TotPop"="Population","RowID"="Row ID","GEOM"="ZIP Code Location") %>% mutate(PctPosCum = CasesCm/TestsCm*100, PctPosWk = CasesWk/TestsWk*100)
@@ -117,8 +119,8 @@ Chicago_COVID19_ByZCTA_geom_ntile_gather <- Chicago_COVID19_ByZCTA_geom_ntile %>
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% filter(ZCTA5 != "Unknown" | ZCTA5 == "60666") %>% mutate(geometry=st_centroid(geometry)) %>% gather("Layer","Value",5:18) %>% mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% cbind(Chicago_COVID19_ByZCTA_geom_ntile_gather) %>% select(-RowID,-TOTPOP)
 
 Chicago_COVID19_ByZCTA_geom <- Chicago_COVID19_ByZCTA_geom %>% 
-  mutate(WeekNo = epiweek(date),
-         WeekNo = if_else(epiyear(date)==2021,WeekNo+52,WeekNo)-1)
+  mutate(WeekNo = epiweek(EndDate),
+         WeekNo = if_else(epiyear(EndDate)==2021,WeekNo+52,WeekNo)-1)
 
 # Used for disparity maps (death and case counts all weeks) 
 st_write(Chicago_COVID19_ByZCTA_geom, "layers/Disparity_counts.shp", append=FALSE)
